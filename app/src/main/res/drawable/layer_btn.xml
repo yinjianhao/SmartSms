@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:bottom="1dp" android:left="1dp" android:right="1dp" android:top="1dp">
+        <shape>
+            <!-- 连框颜色值 -->
+            <solid android:color="#151104" />
+            <!-- 圆角 -->
+            <corners android:radius="6dp" />
+            <!-- 主体背景颜色值 -->
+            <gradient android:angle="90" android:centerColor="@color/colorBaseBlue" android:centerX="0.5" android:centerY="0.5" android:endColor="@color/colorBaseBlue" android:startColor="@color/colorBaseBlue" android:type="linear" />
+            <padding android:bottom="2dp" android:left="2dp" android:right="2dp" android:top="2dp" />
+            <!-- 应该是圆角 -->
+        </shape>
+    </item>
+
+
+</selector>
