@@ -26,10 +26,10 @@
 
         <Button
             android:id="@+id/btn_new_msg"
-            android:layout_width="80dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="?android:attr/buttonBarButtonStyle"
-            android:background="@drawable/selector_btn"
+            android:background="@drawable/layer_btn"
             android:text="@string/new_msg"/>
     </LinearLayout>
 </LinearLayout>
