@@ -1,13 +1,22 @@
 package com.me.smartsms.ui.fragment;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.me.smartsms.R;
 import com.me.smartsms.base.BaseFragment;
@@ -50,6 +59,15 @@ public class ConversationFragment extends BaseFragment {
     @Override
     public void initData() {
 
+        //sdk 6.0,需要判断权限
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_SMS}, 1);
+        } else {
+            Cursor cursor = getActivity().getContentResolver().query(Uri.parse("content://sms/conversations"), null, null, null, null);
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     @Override
@@ -84,5 +102,22 @@ public class ConversationFragment extends BaseFragment {
                 editMenu.animate().translationY(0).setDuration(200);
             }
         }, 200);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 1) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Cursor cursor = getActivity().getContentResolver().query(Uri.parse("content://sms/conversations"), null, null, null, null);
+                if (cursor != null) {
+                    cursor.close();
+                }
+            } else {
+                // Permission Denied
+                Toast.makeText(getActivity(), "Permission Denied", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 }

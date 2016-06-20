@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.me.smartsms">
 
+    <!--  发送消息-->
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <!--  阅读消息-->
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <!--  写入消息-->
+    <uses-permission android:name="android.permission.WRITE_SMS" />
+    <!-- 接收消息 -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
