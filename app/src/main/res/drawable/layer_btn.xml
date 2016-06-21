@@ -6,7 +6,7 @@
             <!-- 填充色 -->
             <solid android:color="@color/colorBaseBlue" />
             <!--边框颜色,宽度-->
-            <stroke android:width="2dp" android:color="@color/colorOrangeRed" />
+            <!--<stroke android:width="2dp" android:color="@color/colorOrangeRed" />-->
             <!-- 圆角 -->
             <corners android:radius="6dp"/>
             <!-- 主体背景颜色值,渐变色 -->

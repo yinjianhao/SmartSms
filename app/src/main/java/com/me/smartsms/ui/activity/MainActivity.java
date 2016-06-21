@@ -25,6 +25,7 @@ import java.util.List;
 public class MainActivity extends BaseActivity {
 
     private ViewPager viewPager;
+    private MainViewPagerAdapter adapter;
     private TextView tvConversation, tvGrouping, tvSearch;
     private LinearLayout llConversation;
     private LinearLayout llGrouping;
@@ -53,7 +54,7 @@ public class MainActivity extends BaseActivity {
         fragments.add(groupFragment);
         fragments.add(searchFragment);
 
-        MainViewPagerAdapter adapter = new MainViewPagerAdapter(getSupportFragmentManager(), fragments);
+        adapter = new MainViewPagerAdapter(getSupportFragmentManager(), fragments);
         if (viewPager != null) {
             viewPager.setAdapter(adapter);
         }
@@ -107,7 +108,6 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setTextLightAndScale(int position) {
-
         tvConversation.setTextColor(position == 0 ? Color.BLUE : Color.WHITE);
         tvGrouping.setTextColor(position == 1 ? Color.BLUE : Color.WHITE);
         tvSearch.setTextColor(position == 2 ? Color.BLUE : Color.WHITE);
@@ -115,9 +115,5 @@ public class MainActivity extends BaseActivity {
         tvConversation.animate().scaleX(position == 0 ? 1.2f : 1).scaleY(position == 0 ? 1.2f : 1).setDuration(200);
         tvGrouping.animate().scaleX(position == 1 ? 1.2f : 1).scaleY(position == 1 ? 1.2f : 1).setDuration(200);
         tvSearch.animate().scaleX(position == 2 ? 1.2f : 1).scaleY(position == 2 ? 1.2f : 1).setDuration(200);
-
-        Point point = new Point();
-        getWindowManager().getDefaultDisplay().getSize(point);
-        int x = point.x;
     }
 }
