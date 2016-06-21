@@ -9,7 +9,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -43,6 +42,7 @@ public class ConversationFragment extends BaseFragment {
 
     private AsyncQueryHandler asyncQueryHandler;
     private Uri smsConversationsUri;
+    private SmsCursorAdapter smsCursorAdapter;
 
     @Override
     public View initView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -74,12 +74,20 @@ public class ConversationFragment extends BaseFragment {
     public void initData() {
         asyncQueryHandler = new SmsQueryHelper(getActivity().getContentResolver());
         smsConversationsUri = Uri.parse("content://sms/conversations");
+        smsCursorAdapter = new SmsCursorAdapter(getActivity(), null, 1);
 
         //6.0,需要判断权限
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_SMS}, 1);
         } else {
-            asyncQueryHandler.startQuery(1, null, smsConversationsUri, null, null, null, null);
+            String[] projection = {
+                    "sms.body as snippet",
+                    "sms.thread_id as _id",
+                    "groups.msg_count as msg_count",
+                    "address as address",
+                    "date as date"
+            };
+            asyncQueryHandler.startQuery(1, smsCursorAdapter, smsConversationsUri, projection, null, null, null);
         }
     }
 
@@ -131,7 +139,7 @@ public class ConversationFragment extends BaseFragment {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    class SmsQueryHelper extends AsyncQueryHandler {
+    static class SmsQueryHelper extends AsyncQueryHandler {
 
         public SmsQueryHelper(ContentResolver cr) {
             super(cr);
@@ -141,26 +149,23 @@ public class ConversationFragment extends BaseFragment {
         protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
             super.onQueryComplete(token, cookie, cursor);
 
-            while (cursor.moveToNext()) {
-                for (int i = 0, l = cursor.getCount(); i < l; i++) {
-                    String key = cursor.getColumnName(i);
-                    String value = cursor.getString(i);
-                    Log.d("cursor", "this " + key + " is " + value);
-                }
-                Log.d("cursor", "----------------------");
+            if (cookie != null && cookie instanceof SmsCursorAdapter) {
+                ((SmsCursorAdapter) cookie).changeCursor(cursor);
             }
-
-//            SmsCursorAdapter smsCursorAdapter = new SmsCursorAdapter(getActivity(), cursor, 1);
-//            listView.setAdapter(smsCursorAdapter);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    for (int i = 0, l = cursor.getCount(); i < l; i++) {
+                        String key = cursor.getColumnName(i);
+                        String value = cursor.getString(i);
+                        Log.d("cursor", "this " + key + " is " + value);
+                    }
+                    Log.d("cursor", "----------------------");
+                }
+            }
         }
     }
 
-    class SmsCursorAdapter extends CursorAdapter{
+    class SmsCursorAdapter extends CursorAdapter {
 
         public SmsCursorAdapter(Context context, Cursor c, int flags) {
             super(context, c, flags);
@@ -168,18 +173,34 @@ public class ConversationFragment extends BaseFragment {
 
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            Log.d("aaa", "newView");
-            View view = LayoutInflater.from(context).inflate(R.layout.listview_sms_item, parent, false);
-            return view;
+            return View.inflate(context, R.layout.listview_sms_item, parent);
         }
 
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-//            ImageView imageView = (ImageView) view.findViewById(R.id.iv_head);
-            Log.d("aaa", "bindView");
-            TextView textView = (TextView) view.findViewById(R.id.tv_name);
+            ViewHolder viewHolder = (ViewHolder) view.getTag();
+            if (viewHolder == null) {
+                viewHolder = new ViewHolder(view);
+                view.setTag(viewHolder);
+            }
 
-            textView.setText(cursor.getString(0));
+            viewHolder.nameTv.setText(cursor.getString(cursor.getColumnIndex("address")));
+            viewHolder.bodyTv.setText(cursor.getString(cursor.getColumnIndex("snippet")));
+            viewHolder.timeTv.setText(cursor.getString(cursor.getColumnIndex("date")));
+        }
+    }
+
+    class ViewHolder {
+        public ImageView headImg;
+        public TextView nameTv;
+        public TextView bodyTv;
+        public TextView timeTv;
+
+        public ViewHolder(View view) {
+            headImg = (ImageView) view.findViewById(R.id.iv_head);
+            nameTv = (TextView) view.findViewById(R.id.tv_name);
+            bodyTv = (TextView) view.findViewById(R.id.tv_body);
+            timeTv = (TextView) view.findViewById(R.id.tv_time);
         }
     }
 }

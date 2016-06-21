@@ -1,17 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content"
+    android:background="@drawable/border"
+    android:orientation="horizontal"
+    android:padding="10dp">
 
-    <ImageView
-        android:id="@+id/iv_head"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@mipmap/ic_launcher"/>
+        android:padding="10dp">
 
-    <TextView
-        android:id="@+id/tv_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <ImageView
+            android:id="@+id/iv_head"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@mipmap/ic_launcher" />
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="3dp"
+            android:layout_marginStart="3dp"
+            android:layout_marginTop="3dp"
+            android:layout_toEndOf="@+id/iv_head"
+            android:layout_toLeftOf="@+id/tv_time"
+            android:layout_toRightOf="@+id/iv_head"
+            android:layout_toStartOf="@+id/tv_time"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="名字"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/tv_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_name"
+            android:layout_marginLeft="3dp"
+            android:layout_marginStart="3dp"
+            android:layout_marginTop="3dp"
+            android:layout_toEndOf="@+id/iv_head"
+            android:layout_toRightOf="@+id/iv_head"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="内容"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:text="时间"
+            android:textSize="18sp" />
+    </RelativeLayout>
 </LinearLayout>
