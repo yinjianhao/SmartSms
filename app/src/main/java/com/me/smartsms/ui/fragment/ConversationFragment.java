@@ -13,6 +13,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.CursorAdapter;
+import android.text.format.DateFormat;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,10 +86,10 @@ public class ConversationFragment extends BaseFragment {
                     "sms.body as snippet",
                     "sms.thread_id as _id",
                     "groups.msg_count as msg_count",
-                    "address as address",
-                    "date as date"
+                    "sms.address as address",
+                    "sms.date as date"
             };
-            asyncQueryHandler.startQuery(1, smsCursorAdapter, smsConversationsUri, projection, null, null, null);
+            asyncQueryHandler.startQuery(1, smsCursorAdapter, smsConversationsUri, projection, null, null, "date desc");
         }
     }
 
@@ -186,7 +188,13 @@ public class ConversationFragment extends BaseFragment {
 
             viewHolder.nameTv.setText(cursor.getString(cursor.getColumnIndex("address")));
             viewHolder.bodyTv.setText(cursor.getString(cursor.getColumnIndex("snippet")));
-            viewHolder.timeTv.setText(cursor.getString(cursor.getColumnIndex("date")));
+
+            Long date = cursor.getLong(cursor.getColumnIndex("date"));
+            if(DateUtils.isToday(date)) {
+                viewHolder.timeTv.setText(DateFormat.getTimeFormat(context).format(date));
+            } else {
+                viewHolder.timeTv.setText(DateFormat.getDateFormat(context).format(date));
+            }
         }
     }
 
