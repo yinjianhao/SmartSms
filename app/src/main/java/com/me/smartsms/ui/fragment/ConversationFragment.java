@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -46,9 +47,16 @@ public class ConversationFragment extends BaseFragment {
     private Uri smsConversationsUri;
     private SmsCursorAdapter smsCursorAdapter;
 
+    private static final int PERMISSION_RECEIVE_SMS = 1;
+    private static final int PERMISSION_RECEIVE_CONTACTS = 2;
+
+    private String phoneNum;
+    private ViewHolder outerViewHolder;
+
     @Override
     public View initView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_conversation, container, false);
+        Log.d("bbb", String.valueOf(view.getId()));
 
         editBtn = (Button) view.findViewById(R.id.btn_edit);
         newMsgBtn = (Button) view.findViewById(R.id.btn_new_msg);
@@ -76,20 +84,13 @@ public class ConversationFragment extends BaseFragment {
     public void initData() {
         asyncQueryHandler = new SmsQueryHelper(getActivity().getContentResolver());
         smsConversationsUri = Uri.parse("content://sms/conversations");
+
         smsCursorAdapter = new SmsCursorAdapter(getActivity(), null, 1);
+        listView.setAdapter(smsCursorAdapter);
 
         //6.0,需要判断权限
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_SMS}, 1);
-        } else {
-            String[] projection = {
-                    "sms.body as snippet",
-                    "sms.thread_id as _id",
-                    "groups.msg_count as msg_count",
-                    "sms.address as address",
-                    "sms.date as date"
-            };
-            asyncQueryHandler.startQuery(1, smsCursorAdapter, smsConversationsUri, projection, null, null, "date desc");
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
+            operationToSmsRead();
         }
     }
 
@@ -127,18 +128,37 @@ public class ConversationFragment extends BaseFragment {
         }, 200);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == 1) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                asyncQueryHandler.startQuery(1, null, smsConversationsUri, null, null, null, null);
+    public void operationToSmsRead() {
+        String[] projection = {
+                "sms.body as snippet",
+                "sms.thread_id as _id",
+                "groups.msg_count as msg_count",
+                "sms.address as address",
+                "sms.date as date"
+        };
+        asyncQueryHandler.startQuery(1, smsCursorAdapter, smsConversationsUri, projection, null, null, "date desc");
+    }
+
+    public void operationToContactRead() {
+        String[] projection = {
+                ContactsContract.PhoneLookup.DISPLAY_NAME,
+                ContactsContract.PhoneLookup.NUMBER
+        };
+
+        Cursor c = getActivity().getContentResolver().query(Uri.withAppendedPath(
+                ContactsContract.PhoneLookup.CONTENT_FILTER_URI, phoneNum), projection, null, null, null);
+
+        if (c != null) {
+            if (c.getCount() != 0) {
+                c.moveToFirst();
+                outerViewHolder.nameTv.setText(c.getString(0));
             } else {
-                // Permission Denied
-                Toast.makeText(getActivity(), "Permission Denied", Toast.LENGTH_SHORT).show();
+                outerViewHolder.nameTv.setText(phoneNum);
             }
-            return;
+            c.close();
+        } else {
+            outerViewHolder.nameTv.setText(phoneNum);
         }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     static class SmsQueryHelper extends AsyncQueryHandler {
@@ -151,18 +171,8 @@ public class ConversationFragment extends BaseFragment {
         protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
             super.onQueryComplete(token, cookie, cursor);
 
-            if (cookie != null && cookie instanceof SmsCursorAdapter) {
+            if (cookie != null && cookie instanceof SmsCursorAdapter && cursor != null && cursor.getCount() > 0) {
                 ((SmsCursorAdapter) cookie).changeCursor(cursor);
-            }
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    for (int i = 0, l = cursor.getCount(); i < l; i++) {
-                        String key = cursor.getColumnName(i);
-                        String value = cursor.getString(i);
-                        Log.d("cursor", "this " + key + " is " + value);
-                    }
-                    Log.d("cursor", "----------------------");
-                }
             }
         }
     }
@@ -175,7 +185,7 @@ public class ConversationFragment extends BaseFragment {
 
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return View.inflate(context, R.layout.listview_sms_item, parent);
+            return LayoutInflater.from(context).inflate(R.layout.listview_sms_item, parent, false);
         }
 
         @Override
@@ -186,11 +196,17 @@ public class ConversationFragment extends BaseFragment {
                 view.setTag(viewHolder);
             }
 
-            viewHolder.nameTv.setText(cursor.getString(cursor.getColumnIndex("address")));
+            outerViewHolder = viewHolder;
+            phoneNum = cursor.getString(cursor.getColumnIndex("address"));
+
+            if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                operationToContactRead();
+            }
+
             viewHolder.bodyTv.setText(cursor.getString(cursor.getColumnIndex("snippet")));
 
             Long date = cursor.getLong(cursor.getColumnIndex("date"));
-            if(DateUtils.isToday(date)) {
+            if (DateUtils.isToday(date)) {
                 viewHolder.timeTv.setText(DateFormat.getTimeFormat(context).format(date));
             } else {
                 viewHolder.timeTv.setText(DateFormat.getDateFormat(context).format(date));
@@ -205,7 +221,6 @@ public class ConversationFragment extends BaseFragment {
         public TextView timeTv;
 
         public ViewHolder(View view) {
-            headImg = (ImageView) view.findViewById(R.id.iv_head);
             nameTv = (TextView) view.findViewById(R.id.tv_name);
             bodyTv = (TextView) view.findViewById(R.id.tv_body);
             timeTv = (TextView) view.findViewById(R.id.tv_time);

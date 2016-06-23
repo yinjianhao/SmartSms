@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
     <ListView
         android:id="@+id/lv_sms_content"
         android:layout_width="match_parent"
@@ -9,70 +11,72 @@
         android:layout_weight="1">
 
     </ListView>
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="50dp">
+
         <LinearLayout
             android:id="@+id/ll_edit_menu"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/btn_edit"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="20dp"
                 android:layout_marginEnd="20dp"
-                style="?android:attr/buttonBarButtonStyle"
+                android:layout_marginRight="20dp"
                 android:background="@drawable/layer_btn"
                 android:text="@string/edit" />
 
             <Button
                 android:id="@+id/btn_new_msg"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="?android:attr/buttonBarButtonStyle"
                 android:background="@drawable/layer_btn"
-                android:text="@string/new_msg"/>
+                android:text="@string/new_msg" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/ll_select_menu"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:orientation="horizontal"
             android:gravity="center"
+            android:orientation="horizontal"
             android:translationY="50dp">
 
             <Button
                 android:id="@+id/btn_select_all"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="20dp"
                 android:layout_marginEnd="20dp"
-                style="?android:attr/buttonBarButtonStyle"
+                android:layout_marginRight="20dp"
                 android:background="@drawable/layer_btn"
                 android:text="@string/select_all" />
 
             <Button
                 android:id="@+id/btn_cancel"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="20dp"
                 android:layout_marginEnd="20dp"
-                style="?android:attr/buttonBarButtonStyle"
+                android:layout_marginRight="20dp"
                 android:background="@drawable/layer_btn"
-                android:text="@string/cancel"/>
+                android:text="@string/cancel" />
 
             <Button
                 android:id="@+id/btn_delete"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="?android:attr/buttonBarButtonStyle"
                 android:background="@drawable/layer_btn"
-                android:text="@string/delete"/>
+                android:text="@string/delete" />
         </LinearLayout>
     </RelativeLayout>
 </LinearLayout>

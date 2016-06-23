@@ -1,16 +1,19 @@
 package com.me.smartsms.ui.activity;
 
-import android.content.res.ColorStateList;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Point;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPropertyAnimatorCompat;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.me.smartsms.R;
 import com.me.smartsms.adapter.MainViewPagerAdapter;
@@ -35,6 +38,8 @@ public class MainActivity extends BaseActivity {
     @Override
     public void initView() {
         setContentView(R.layout.activity_main);
+
+
         viewPager = (ViewPager) findViewById(R.id.vp);
         tvConversation = (TextView) findViewById(R.id.tv_conversation);
         tvGrouping = (TextView) findViewById(R.id.tv_grouping);
@@ -69,7 +74,6 @@ public class MainActivity extends BaseActivity {
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                Log.d("xx", positionOffsetPixels + "");
                 redLine.animate().translationX(positionOffsetPixels / 3 + position * redLine.getWidth()).setDuration(0);
             }
 
@@ -87,7 +91,25 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void initData() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.READ_SMS,
+                    Manifest.permission.READ_CONTACTS
+            }, 0);
+        }
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 0) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                ((ConversationFragment) adapter.getItem(0)).operationToSmsRead();
+            } else if (grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                ((ConversationFragment) adapter.getItem(0)).operationToContactRead();
+            } else {
+                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
