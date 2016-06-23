@@ -6,6 +6,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,6 +31,8 @@ import android.widget.Toast;
 
 import com.me.smartsms.R;
 import com.me.smartsms.base.BaseFragment;
+
+import java.io.InputStream;
 
 public class ConversationFragment extends BaseFragment {
 
@@ -142,8 +146,10 @@ public class ConversationFragment extends BaseFragment {
     public void operationToContactRead() {
         String[] projection = {
                 ContactsContract.PhoneLookup.DISPLAY_NAME,
-                ContactsContract.PhoneLookup.NUMBER
+                ContactsContract.PhoneLookup._ID
         };
+
+        String _id = "";
 
         Cursor c = getActivity().getContentResolver().query(Uri.withAppendedPath(
                 ContactsContract.PhoneLookup.CONTENT_FILTER_URI, phoneNum), projection, null, null, null);
@@ -152,12 +158,18 @@ public class ConversationFragment extends BaseFragment {
             if (c.getCount() != 0) {
                 c.moveToFirst();
                 outerViewHolder.nameTv.setText(c.getString(0));
+                _id = c.getString(1);
             } else {
                 outerViewHolder.nameTv.setText(phoneNum);
             }
             c.close();
         } else {
             outerViewHolder.nameTv.setText(phoneNum);
+        }
+
+        if(!_id.equals("")) {
+            InputStream in = ContactsContract.Contacts.openContactPhotoInputStream(getActivity().getContentResolver(), Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, _id));
+            outerViewHolder.headImg.setImageBitmap(BitmapFactory.decodeStream(in));
         }
     }
 
