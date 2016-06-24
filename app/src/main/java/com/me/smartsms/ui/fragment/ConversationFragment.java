@@ -3,11 +3,14 @@ package com.me.smartsms.ui.fragment;
 import android.Manifest;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,6 +25,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -31,8 +36,12 @@ import android.widget.Toast;
 
 import com.me.smartsms.R;
 import com.me.smartsms.base.BaseFragment;
+import com.me.smartsms.ui.activity.NewSmsActivity;
 
 import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConversationFragment extends BaseFragment {
 
@@ -51,11 +60,14 @@ public class ConversationFragment extends BaseFragment {
     private Uri smsConversationsUri;
     private SmsCursorAdapter smsCursorAdapter;
 
-    private static final int PERMISSION_RECEIVE_SMS = 1;
-    private static final int PERMISSION_RECEIVE_CONTACTS = 2;
-
     private String phoneNum;
     private ViewHolder outerViewHolder;
+
+    //编辑状态
+    private Boolean editState = false;
+    private Boolean isAllChecked = false;
+    private static Cursor smsCursor;
+    private static List<Integer> idsList = new ArrayList<>();
 
     @Override
     public View initView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -82,6 +94,28 @@ public class ConversationFragment extends BaseFragment {
         selectAllBtn.setOnClickListener(this);
         cancelBtn.setOnClickListener(this);
         deleteBtn.setOnClickListener(this);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (editState) {
+                    smsCursor.moveToPosition(position);
+                    int _id = smsCursor.getInt(smsCursor.getColumnIndex("_id"));
+                    if (idsList.contains(_id)) {
+                        idsList.remove((Integer) _id);
+                        isAllChecked = false;
+                    } else {
+                        idsList.add(_id);
+                        if (smsCursor.getCount() == idsList.size()) {
+                            isAllChecked = true;
+                        }
+                    }
+                    smsCursorAdapter.notifyDataSetChanged();
+                } else {
+                    // TODO: 2016/6/24
+                }
+            }
+        });
     }
 
     @Override
@@ -103,9 +137,39 @@ public class ConversationFragment extends BaseFragment {
         switch (v.getId()) {
             case R.id.btn_edit:
                 showSelectMenu();
+                editState = true;
+                smsCursorAdapter.notifyDataSetChanged();
                 break;
             case R.id.btn_cancel:
                 showEditMenu();
+                editState = false;
+                smsCursorAdapter.notifyDataSetChanged();
+                idsList.clear();
+                isAllChecked = false;
+                break;
+            case R.id.btn_select_all:
+                isAllChecked = !isAllChecked;
+                idsList.clear();
+                if (isAllChecked) {
+                    smsCursor.moveToFirst();
+                    do {
+                        idsList.add(smsCursor.getInt(smsCursor.getColumnIndex("_id")));
+                    } while (smsCursor.moveToNext());
+                }
+                smsCursorAdapter.notifyDataSetChanged();
+                break;
+            case R.id.btn_delete:
+                if (idsList.isEmpty()) {
+                    Toast.makeText(getActivity(), "请选择要删除的条目", Toast.LENGTH_SHORT).show();
+                } else {
+                    for (int i = 0, l = idsList.size(); i < l; i++) {
+                        asyncQueryHandler.startDelete(2, i, Uri.parse("content://sms/conversations/" + idsList.get(i)), null, null);
+                    }
+                }
+                break;
+            case R.id.btn_new_msg:
+                Intent intent = new Intent(getActivity(), NewSmsActivity.class);
+                startActivity(intent);
                 break;
             default:
                 break;
@@ -151,6 +215,7 @@ public class ConversationFragment extends BaseFragment {
 
         String _id = "";
 
+        //获取联系人名字
         Cursor c = getActivity().getContentResolver().query(Uri.withAppendedPath(
                 ContactsContract.PhoneLookup.CONTENT_FILTER_URI, phoneNum), projection, null, null, null);
 
@@ -167,9 +232,20 @@ public class ConversationFragment extends BaseFragment {
             outerViewHolder.nameTv.setText(phoneNum);
         }
 
-        if(!_id.equals("")) {
-            InputStream in = ContactsContract.Contacts.openContactPhotoInputStream(getActivity().getContentResolver(), Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, _id));
-            outerViewHolder.headImg.setImageBitmap(BitmapFactory.decodeStream(in));
+        //获取联系人头像
+        if (!_id.equals("")) {
+            InputStream in = ContactsContract.Contacts.openContactPhotoInputStream(
+                    getActivity().getContentResolver(),
+                    ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, Long.parseLong(_id)));
+            if (in != null) {
+                Bitmap bitmap = BitmapFactory.decodeStream(in);
+                outerViewHolder.headImg.setImageBitmap(bitmap);
+//                outerViewHolder.headImg.setBackgroundDrawable(new BitmapDrawable(bitmap));
+            } else {
+                outerViewHolder.headImg.setImageResource(R.drawable.img_default_avatar);
+            }
+        } else {
+            outerViewHolder.headImg.setImageResource(R.drawable.img_default_avatar);
         }
     }
 
@@ -185,7 +261,13 @@ public class ConversationFragment extends BaseFragment {
 
             if (cookie != null && cookie instanceof SmsCursorAdapter && cursor != null && cursor.getCount() > 0) {
                 ((SmsCursorAdapter) cookie).changeCursor(cursor);
+                smsCursor = cursor;
             }
+        }
+
+        @Override
+        protected void onDeleteComplete(int token, Object cookie, int result) {
+            idsList.remove((int)cookie);
         }
     }
 
@@ -223,6 +305,22 @@ public class ConversationFragment extends BaseFragment {
             } else {
                 viewHolder.timeTv.setText(DateFormat.getDateFormat(context).format(date));
             }
+
+            int _id = cursor.getInt(cursor.getColumnIndex("_id"));
+            if (editState) {
+                viewHolder.checkboxImg.setVisibility(View.VISIBLE);
+                if (isAllChecked) {
+                    viewHolder.checkboxImg.setImageResource(R.drawable.common_checkbox_checked);
+                } else {
+                    if (idsList.contains(_id)) {
+                        viewHolder.checkboxImg.setImageResource(R.drawable.common_checkbox_checked);
+                    } else {
+                        viewHolder.checkboxImg.setImageResource(R.drawable.common_checkbox_normal);
+                    }
+                }
+            } else {
+                viewHolder.checkboxImg.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -231,11 +329,14 @@ public class ConversationFragment extends BaseFragment {
         public TextView nameTv;
         public TextView bodyTv;
         public TextView timeTv;
+        private ImageView checkboxImg;
 
         public ViewHolder(View view) {
+            headImg = (ImageView) view.findViewById(R.id.iv_head);
             nameTv = (TextView) view.findViewById(R.id.tv_name);
             bodyTv = (TextView) view.findViewById(R.id.tv_body);
             timeTv = (TextView) view.findViewById(R.id.tv_time);
+            checkboxImg = (ImageView) view.findViewById(R.id.iv_checkbox);
         }
     }
 }

@@ -6,8 +6,6 @@ import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.View;
@@ -27,6 +25,7 @@ import java.util.List;
 
 public class MainActivity extends BaseActivity {
 
+    private static final String TAG = "MainActivity";
     private ViewPager viewPager;
     private MainViewPagerAdapter adapter;
     private TextView tvConversation, tvGrouping, tvSearch;
@@ -38,7 +37,6 @@ public class MainActivity extends BaseActivity {
     @Override
     public void initView() {
         setContentView(R.layout.activity_main);
-
 
         viewPager = (ViewPager) findViewById(R.id.vp);
         tvConversation = (TextView) findViewById(R.id.tv_conversation);
@@ -84,19 +82,17 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onPageScrollStateChanged(int state) {
-                Log.d("State", state + "");
+                Log.d(TAG, state + "");
             }
         });
     }
 
     @Override
     public void initData() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{
                     Manifest.permission.READ_SMS,
                     Manifest.permission.READ_CONTACTS
             }, 0);
-        }
     }
 
     @Override

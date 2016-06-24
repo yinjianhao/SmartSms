@@ -1,6 +1,7 @@
 package com.me.smartsms.base;
 
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
@@ -8,7 +9,7 @@ import android.view.View;
  * 基类activity
  */
 
-public abstract class BaseActivity extends AppCompatActivity implements View.OnClickListener{
+public abstract class BaseActivity extends FragmentActivity implements View.OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -19,8 +20,11 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     }
 
     public abstract void initView();
+
     public abstract void initListener();
+
     public abstract void initData();
+
     public abstract void processEvents(View v);
 
     @Override
