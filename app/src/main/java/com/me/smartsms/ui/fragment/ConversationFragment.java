@@ -10,13 +10,11 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.provider.ContactsContract;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.CursorAdapter;
 import android.text.format.DateFormat;
@@ -25,7 +23,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -36,10 +33,12 @@ import android.widget.Toast;
 
 import com.me.smartsms.R;
 import com.me.smartsms.base.BaseFragment;
+import com.me.smartsms.ui.activity.DetailActivity;
 import com.me.smartsms.ui.activity.NewSmsActivity;
+import com.me.smartsms.ui.dialog.ConfirmDialog;
+import com.me.smartsms.ui.dialog.DeleteDialog;
 
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,10 +49,8 @@ public class ConversationFragment extends BaseFragment {
     private Button selectAllBtn;
     private Button cancelBtn;
     private Button deleteBtn;
-
     private LinearLayout selectMenu;
     private LinearLayout editMenu;
-
     private ListView listView;
 
     private AsyncQueryHandler asyncQueryHandler;
@@ -68,6 +65,31 @@ public class ConversationFragment extends BaseFragment {
     private Boolean isAllChecked = false;
     private static Cursor smsCursor;
     private static List<Integer> idsList = new ArrayList<>();
+
+    private static final int WHAT_DELETE_COMPLETE = 1;
+    private static final int WHAT_UPDATE_DELETE_PROGRESS = 2;
+
+    private DeleteDialog deleteDialog;
+    private Boolean isStopDelete = false;
+
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case WHAT_DELETE_COMPLETE:
+                    editState = false;
+                    smsCursorAdapter.notifyDataSetChanged();
+                    showEditMenu();
+                    deleteDialog.dismiss();
+                    break;
+                case WHAT_UPDATE_DELETE_PROGRESS:
+                    deleteDialog.setProgress(msg.arg1);
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
     @Override
     public View initView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -112,7 +134,11 @@ public class ConversationFragment extends BaseFragment {
                     }
                     smsCursorAdapter.notifyDataSetChanged();
                 } else {
-                    // TODO: 2016/6/24
+                    Cursor c = (Cursor) smsCursorAdapter.getItem(position);
+                    Intent intent = new Intent(getActivity(), DetailActivity.class);
+                    intent.putExtra("address", c.getString(c.getColumnIndex("address")));
+                    intent.putExtra("thread_id", c.getInt(c.getColumnIndex("_id")));
+                    startActivity(intent);
                 }
             }
         });
@@ -162,9 +188,49 @@ public class ConversationFragment extends BaseFragment {
                 if (idsList.isEmpty()) {
                     Toast.makeText(getActivity(), "请选择要删除的条目", Toast.LENGTH_SHORT).show();
                 } else {
-                    for (int i = 0, l = idsList.size(); i < l; i++) {
-                        asyncQueryHandler.startDelete(2, i, Uri.parse("content://sms/conversations/" + idsList.get(i)), null, null);
-                    }
+                    ConfirmDialog confirmDialog = new ConfirmDialog(getActivity(), "提示", "确定要删除吗?", new ConfirmDialog.OnConfirmListener() {
+                        @Override
+                        public void onCancel() {
+                            isStopDelete = true;
+                        }
+
+                        @Override
+                        public void onConfirm() {
+                            final int maxLength = idsList.size();
+                            deleteDialog = new DeleteDialog(getActivity(), maxLength, new DeleteDialog.OnDeleteCancelListener() {
+                                @Override
+                                public void onCancel(View v) {
+                                    isStopDelete = true;
+                                }
+                            });
+                            deleteDialog.show();
+                            Thread thread = new Thread() {
+                                @Override
+                                public void run() {
+                                    for (int i = 0; i < maxLength; i++) {
+                                        try {
+                                            sleep(500);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                        if (isStopDelete) {
+                                            isStopDelete = false;
+                                            break;
+                                        }
+                                        getActivity().getContentResolver().delete(Uri.parse("content://sms"), "thread_id = ?", new String[]{String.valueOf(idsList.get(i))});
+                                        Message message = new Message();
+                                        message.what = WHAT_UPDATE_DELETE_PROGRESS;
+                                        message.arg1 = i + 1;
+                                        handler.sendMessage(message);
+                                    }
+                                    idsList.clear();
+                                    handler.sendEmptyMessage(WHAT_DELETE_COMPLETE);
+                                }
+                            };
+                            thread.start();
+                        }
+                    });
+                    confirmDialog.show();
                 }
                 break;
             case R.id.btn_new_msg:
@@ -267,11 +333,16 @@ public class ConversationFragment extends BaseFragment {
 
         @Override
         protected void onDeleteComplete(int token, Object cookie, int result) {
-            idsList.remove((int)cookie);
+
         }
     }
 
     class SmsCursorAdapter extends CursorAdapter {
+
+        @Override
+        public Object getItem(int position) {
+            return super.getItem(position);
+        }
 
         public SmsCursorAdapter(Context context, Cursor c, int flags) {
             super(context, c, flags);
