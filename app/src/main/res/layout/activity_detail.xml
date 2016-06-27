@@ -12,7 +12,9 @@
         android:id="@+id/lv_body"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:divider="@android:color/transparent"
+        android:listSelector="@android:color/transparent">
 
     </ListView>
 
@@ -33,6 +35,7 @@
             android:maxLines="3" />
 
         <Button
+            android:id="@+id/btn_send"
             android:layout_width="wrap_content"
             android:layout_height="30dp"
             android:layout_gravity="center_vertical"

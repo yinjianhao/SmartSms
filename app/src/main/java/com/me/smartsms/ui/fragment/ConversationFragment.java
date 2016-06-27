@@ -20,6 +20,7 @@ import android.support.v4.widget.CursorAdapter;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -93,7 +94,7 @@ public class ConversationFragment extends BaseFragment {
 
     @Override
     public View initView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_conversation, container, false);
+        final View view = inflater.inflate(R.layout.fragment_conversation, container, false);
         Log.d("bbb", String.valueOf(view.getId()));
 
         editBtn = (Button) view.findViewById(R.id.btn_edit);
@@ -106,6 +107,24 @@ public class ConversationFragment extends BaseFragment {
         editMenu = (LinearLayout) view.findViewById(R.id.ll_edit_menu);
 
         listView = (ListView) view.findViewById(R.id.lv_sms_content);
+
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        view.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK){
+                    if(editState) {
+                        editState = false;
+                        smsCursorAdapter.notifyDataSetChanged();
+                        showEditMenu();
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            }
+        });
         return view;
     }
 
@@ -140,6 +159,18 @@ public class ConversationFragment extends BaseFragment {
                     intent.putExtra("thread_id", c.getInt(c.getColumnIndex("_id")));
                     startActivity(intent);
                 }
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if(!editState) {
+                    editState = true;
+                    smsCursorAdapter.notifyDataSetChanged();
+                    showSelectMenu();
+                }
+                return true;
             }
         });
     }

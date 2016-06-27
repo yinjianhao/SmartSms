@@ -8,6 +8,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -22,6 +24,8 @@ import com.me.smartsms.ui.fragment.SearchFragment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends BaseActivity {
 
@@ -33,6 +37,7 @@ public class MainActivity extends BaseActivity {
     private LinearLayout llGrouping;
     private LinearLayout llSearch;
     private TextView redLine;
+    private int backCount = 0;
 
     @Override
     public void initView() {
@@ -89,10 +94,10 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public void initData() {
-            ActivityCompat.requestPermissions(this, new String[]{
-                    Manifest.permission.READ_SMS,
-                    Manifest.permission.READ_CONTACTS
-            }, 0);
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.READ_SMS,
+                Manifest.permission.READ_CONTACTS
+        }, 0);
     }
 
     @Override
@@ -133,5 +138,23 @@ public class MainActivity extends BaseActivity {
         tvConversation.animate().scaleX(position == 0 ? 1.2f : 1).scaleY(position == 0 ? 1.2f : 1).setDuration(200);
         tvGrouping.animate().scaleX(position == 1 ? 1.2f : 1).scaleY(position == 1 ? 1.2f : 1).setDuration(200);
         tvSearch.animate().scaleX(position == 2 ? 1.2f : 1).scaleY(position == 2 ? 1.2f : 1).setDuration(200);
+    }
+
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+        if (backCount > 0) {
+            finish();
+        } else {
+            backCount += 1;
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    backCount = 0;
+                }
+            }, 2000);
+            Toast.makeText(this, "再次点击退出", Toast.LENGTH_SHORT).show();
+        }
     }
 }
