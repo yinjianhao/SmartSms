@@ -17,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -53,6 +54,8 @@ public class DetailActivity extends Activity implements View.OnClickListener, Vi
         lv_body = (ListView) findViewById(R.id.lv_body);
         et_input = (EditText) findViewById(R.id.et_input);
         btn_send = (Button) findViewById(R.id.btn_send);
+
+        lv_body.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
     }
 
     private void initListener() {

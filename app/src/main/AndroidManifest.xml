@@ -28,7 +28,8 @@
         </activity>
         <activity android:name=".ui.activity.NewSmsActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-        <activity android:name=".ui.activity.DetailActivity"/>
+        <activity android:name=".ui.activity.DetailActivity"
+            android:windowSoftInputMode="adjustUnspecified|adjustNothing"/>
     </application>
 
 </manifest>
