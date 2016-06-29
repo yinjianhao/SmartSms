@@ -18,14 +18,24 @@
             android:layout_height="wrap_content"
             android:background="@drawable/btn_back" />
 
-        <EditText
+        <!--<EditText-->
+            <!--android:id="@+id/et_name_input"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:hint="联系人"-->
+            <!--android:textColorHint="#fff"-->
+            <!--android:textColor="#fff"-->
+            <!--android:textSize="18sp" />-->
+
+        <AutoCompleteTextView
             android:id="@+id/et_name_input"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
             android:hint="联系人"
-            android:textColorHint="#fff"
             android:textColor="#fff"
+            android:textColorHint="#fff"
             android:textSize="18sp" />
 
         <TextView
