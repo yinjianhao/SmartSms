@@ -29,7 +29,14 @@
         <activity android:name=".ui.activity.NewSmsActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity android:name=".ui.activity.DetailActivity"
-            android:windowSoftInputMode="adjustUnspecified|adjustNothing"/>
+            android:windowSoftInputMode="stateHidden|adjustResize"/>
+
+        <receiver android:name=".broadcast.SmsSendBroadcast"
+            android:permission="android.provider.Telephony.SMS_RECEIVED">
+            <intent-filter>
+                <action android:name="com.me.smartsms.sendsms"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

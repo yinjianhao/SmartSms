@@ -1,6 +1,7 @@
 package com.me.smartsms.ui.activity;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -10,6 +11,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.v4.widget.CursorAdapter;
+import android.telephony.SmsManager;
+import android.text.Editable;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -26,7 +29,9 @@ import android.widget.TextView;
 import com.me.smartsms.R;
 import com.me.smartsms.bean.SmsDetailBean;
 
-public class DetailActivity extends Activity implements View.OnClickListener, View.OnTouchListener{
+import java.util.List;
+
+public class DetailActivity extends Activity implements View.OnClickListener, View.OnTouchListener {
 
     private static final String TAG = "DetailActivity";
     private String address;
@@ -119,8 +124,26 @@ public class DetailActivity extends Activity implements View.OnClickListener, Vi
             case R.id.iv_titleBar_back:
                 finish();
                 break;
+            case R.id.btn_send:
+                sendSms();
+                et_input.setText("");
+                break;
             default:
                 break;
+        }
+    }
+
+    private void sendSms() {
+        String smsBody = String.valueOf(et_input.getText());
+
+        if (!smsBody.isEmpty()) {
+            SmsManager smsManager = SmsManager.getDefault();
+            List<String> smsBodys = smsManager.divideMessage(smsBody);
+            Intent intent = new Intent("com.me.smartsms.sendsms");
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, intent, PendingIntent.FLAG_ONE_SHOT);
+            for (String sms : smsBodys) {
+                smsManager.sendTextMessage(address, null, sms, pendingIntent, null);
+            }
         }
     }
 
