@@ -2,6 +2,7 @@ package com.me.smartsms.ui.activity;
 
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AutoCompleteTextView;
@@ -148,20 +150,36 @@ public class NewSmsActivity extends Activity implements View.OnClickListener {
 
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return null;
+            return LayoutInflater.from(context).inflate(R.layout.auto_text_item, parent, false);
         }
 
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
+            ViewHolder viewHolder = (ViewHolder) view.getTag();
 
+            if(viewHolder == null) {
+                viewHolder = new ViewHolder(view);
+                view.setTag(viewHolder);
+            }
+
+            viewHolder.tv_item_name.setText(cursor.getString(cursor.getColumnIndex("display_name")));
+            viewHolder.tv_item_phone.setText(cursor.getString(cursor.getColumnIndex("data1")));
+        }
+
+        @Override
+        public CharSequence convertToString(Cursor cursor) {
+            return cursor.getString(cursor.getColumnIndex("data1"));
         }
     }
 
     private class ViewHolder {
 
+        public TextView tv_item_name;
+        public TextView tv_item_phone;
 
-        public ViewHolder() {
-
+        public ViewHolder(View view) {
+            tv_item_name = (TextView) view.findViewById(R.id.tv_auto_text_item_name);
+            tv_item_phone = (TextView) view.findViewById(R.id.tv_auto_text_item_phone);
         }
     }
 }

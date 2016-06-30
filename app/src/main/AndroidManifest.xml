@@ -18,7 +18,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ui.activity.MainActivity"
+        <activity
+            android:name=".ui.activity.MainActivity"
             android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,17 +27,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.activity.NewSmsActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-        <activity android:name=".ui.activity.DetailActivity"
-            android:windowSoftInputMode="stateHidden|adjustResize"/>
+        <activity
+            android:name=".ui.activity.NewSmsActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".ui.activity.DetailActivity"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
 
-        <receiver android:name=".broadcast.SmsSendBroadcast"
+        <receiver
+            android:name=".broadcast.SmsSendBroadcast"
             android:permission="android.provider.Telephony.SMS_RECEIVED">
             <intent-filter>
-                <action android:name="com.me.smartsms.sendsms"/>
+                <action android:name="com.me.smartsms.sendsms" />
             </intent-filter>
         </receiver>
+        <provider
+            android:name=".provider.GroupProvider"
+            android:authorities="com.me.smartsms"
+            android:exported="true" />
     </application>
-
 </manifest>
