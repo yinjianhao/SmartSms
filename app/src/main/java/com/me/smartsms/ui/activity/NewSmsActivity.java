@@ -73,10 +73,9 @@ public class NewSmsActivity extends Activity implements View.OnClickListener {
                         "display_name",
                         "_id"
                 };
-                String selection = "data1 like '%" + constraint + "%'";
-                Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, projection, selection, null, null);
 
-                return cursor;
+                String selection = "data1 like '%" + constraint + "%'";
+                return getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, projection, selection, null, null);
             }
         });
     }
