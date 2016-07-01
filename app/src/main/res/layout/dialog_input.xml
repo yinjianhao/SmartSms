@@ -15,7 +15,7 @@
         android:layout_marginTop="10dp"/>
 
     <EditText
-        android:id="@+id/tv_input_dialog_body"
+        android:id="@+id/et_input_dialog_body"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_normal_btn"

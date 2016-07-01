@@ -1,18 +1,29 @@
 package com.me.smartsms.ui.fragment;
 
 
+import android.content.AsyncQueryHandler;
+import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.renderscript.Sampler;
+import android.support.v4.widget.CursorAdapter;
+import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.me.smartsms.R;
 import com.me.smartsms.base.BaseFragment;
+import com.me.smartsms.ui.dialog.GroupDialog;
 import com.me.smartsms.ui.dialog.InputDialog;
 
 public class GroupFragment extends BaseFragment {
@@ -20,6 +31,9 @@ public class GroupFragment extends BaseFragment {
     private View view;
     private ListView lv_groups;
     private Button btn_new_group;
+
+    private GroupsCursorAdapter adapter;
+    private GroupsAsyncQueryHandler helper;
 
     @Override
     public View initView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -32,11 +46,37 @@ public class GroupFragment extends BaseFragment {
     @Override
     public void initListener() {
         btn_new_group.setOnClickListener(this);
+        lv_groups.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(getActivity(), "单击", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        lv_groups.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                GroupDialog groupDialog = new GroupDialog(getActivity(), "操作", new GroupDialog.GroupDialogListener() {
+                    @Override
+                    public void onDelete() {
+                        Cursor c = (Cursor) adapter.getItem(position);
+                        String _id = c.getString(c.getColumnIndex("_id"));
+                        helper.startDelete(1, null, Uri.parse("content://com.me.smartsms"), "_id = ?", new String[]{_id});
+                    }
+                });
+                groupDialog.show();
+                return true;
+            }
+        });
     }
 
     @Override
     public void initData() {
+        adapter = new GroupsCursorAdapter(getActivity(), null, true);
+        lv_groups.setAdapter(adapter);
 
+        helper = new GroupsAsyncQueryHandler(getActivity().getContentResolver());
+        helper.startQuery(1, adapter, Uri.parse("content://com.me.smartsms/groups/query"), null, null, null, null);
     }
 
     @Override
@@ -50,20 +90,72 @@ public class GroupFragment extends BaseFragment {
                     }
 
                     @Override
-                    public void onConfirm() {
-                        Log.d(TAG, "onConfirm");
+                    public void onConfirm(String groupName) {
+                        ContentValues values = new ContentValues();
+                        values.put("name", groupName);
+                        values.put("create_date", System.currentTimeMillis());
+                        values.put("thread_count", 0);
+                        helper.startInsert(1, null, Uri.parse("content://com.me.smartsms/groups/insert"), values);
                     }
                 });
                 inputDialog.show();
-
-                ContentValues values = new ContentValues();
-                values.put("name", "帅的人还在码代码");
-                values.put("create_date", System.currentTimeMillis());
-                values.put("thread_count", 0);
-                getActivity().getContentResolver().insert(Uri.parse("content://com.me.smartsms/groups/insert"), values);
                 break;
             default:
                 break;
+        }
+    }
+
+    private static class GroupsAsyncQueryHandler extends AsyncQueryHandler {
+
+        public GroupsAsyncQueryHandler(ContentResolver cr) {
+            super(cr);
+        }
+
+        @Override
+        protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
+            ((GroupsCursorAdapter) cookie).changeCursor(cursor);
+        }
+
+        @Override
+        protected void onInsertComplete(int token, Object cookie, Uri uri) {
+
+        }
+
+        @Override
+        protected void onDeleteComplete(int token, Object cookie, int result) {
+
+        }
+    }
+
+    private class GroupsCursorAdapter extends CursorAdapter {
+
+        public GroupsCursorAdapter(Context context, Cursor c, boolean autoRequery) {
+            super(context, c, autoRequery);
+        }
+
+        @Override
+        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+            return LayoutInflater.from(context).inflate(R.layout.listview_group_item, parent, false);
+        }
+
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
+            ViewHolder viewHolder = (ViewHolder) view.getTag();
+            if (viewHolder == null) {
+                viewHolder = new ViewHolder(view);
+                view.setTag(viewHolder);
+            }
+
+            viewHolder.tv_group_name.setText(cursor.getString(cursor.getColumnIndex("name")) + "(" + cursor.getString(cursor.getColumnIndex("thread_count")) + ")");
+        }
+    }
+
+    private class ViewHolder {
+
+        public TextView tv_group_name;
+
+        public ViewHolder(View view) {
+            tv_group_name = (TextView) view.findViewById(R.id.tv_group_name);
         }
     }
 }

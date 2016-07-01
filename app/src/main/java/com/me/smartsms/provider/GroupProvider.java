@@ -1,6 +1,7 @@
 package com.me.smartsms.provider;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -20,9 +21,11 @@ public class GroupProvider extends ContentProvider {
     private final String authority = "com.me.smartsms";
 
     private final int CODE_GROUPS_INSERT = 0;
+    private final int CODE_GROUPS_QUERY = 1;
 
     {
         uriMatcher.addURI(authority, "groups/insert", CODE_GROUPS_INSERT);
+        uriMatcher.addURI(authority, "groups/query", CODE_GROUPS_QUERY);
     }
 
     @Override
@@ -35,7 +38,8 @@ public class GroupProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        return null;
+        Cursor cursor = db.query("groups", projection, selection, selectionArgs, null, null, sortOrder);
+        return cursor;
     }
 
     @Nullable
@@ -62,7 +66,7 @@ public class GroupProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        return 0;
+        return db.delete("groups", selection, selectionArgs);
     }
 
     @Override
