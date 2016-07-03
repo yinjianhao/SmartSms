@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.renderscript.Sampler;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v7.widget.ThemedSpinnerAdapter;
+import android.text.format.DateFormat;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -56,12 +58,36 @@ public class GroupFragment extends BaseFragment {
         lv_groups.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-                GroupDialog groupDialog = new GroupDialog(getActivity(), "操作", new GroupDialog.GroupDialogListener() {
+                Cursor c = (Cursor) adapter.getItem(position);
+                final String _id = c.getString(c.getColumnIndex("_id"));
+
+                GroupDialog groupDialog = new GroupDialog(getActivity(), "操作", new String[]{"删除", "改名"}, new GroupDialog.GroupDialogListener() {
                     @Override
-                    public void onDelete() {
-                        Cursor c = (Cursor) adapter.getItem(position);
-                        String _id = c.getString(c.getColumnIndex("_id"));
-                        helper.startDelete(1, null, Uri.parse("content://com.me.smartsms"), "_id = ?", new String[]{_id});
+                    public void onItemClickListener(AdapterView<?> parent, View view, int position, long id) {
+                        switch (position) {
+                            case 0:
+                                helper.startDelete(1, null, Uri.parse("content://com.me.smartsms"), "_id = ?", new String[]{_id});
+                                break;
+                            case 1:
+                                InputDialog inputDialog = new InputDialog(getActivity(), "修改组名", new InputDialog.OnInputDialogListener() {
+
+                                    @Override
+                                    public void onCancel() {
+
+                                    }
+
+                                    @Override
+                                    public void onConfirm(String groupName) {
+                                        ContentValues values = new ContentValues();
+                                        values.put("name", groupName);
+                                        helper.startUpdate(1, null, Uri.parse("content://com.me.smartsms"), values, "_id = ?", new String[]{_id});
+                                    }
+                                });
+                                inputDialog.show();
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 });
                 groupDialog.show();
@@ -72,11 +98,11 @@ public class GroupFragment extends BaseFragment {
 
     @Override
     public void initData() {
-        adapter = new GroupsCursorAdapter(getActivity(), null, true);
+        adapter = new GroupsCursorAdapter(getActivity(), null, 1);
         lv_groups.setAdapter(adapter);
 
         helper = new GroupsAsyncQueryHandler(getActivity().getContentResolver());
-        helper.startQuery(1, adapter, Uri.parse("content://com.me.smartsms/groups/query"), null, null, null, null);
+        helper.startQuery(1, adapter, Uri.parse("content://com.me.smartsms/groups/query"), null, null, null, "create_date desc");
     }
 
     @Override
@@ -129,8 +155,9 @@ public class GroupFragment extends BaseFragment {
 
     private class GroupsCursorAdapter extends CursorAdapter {
 
-        public GroupsCursorAdapter(Context context, Cursor c, boolean autoRequery) {
-            super(context, c, autoRequery);
+
+        public GroupsCursorAdapter(Context context, Cursor c, int flags) {
+            super(context, c, flags);
         }
 
         @Override
@@ -147,15 +174,23 @@ public class GroupFragment extends BaseFragment {
             }
 
             viewHolder.tv_group_name.setText(cursor.getString(cursor.getColumnIndex("name")) + "(" + cursor.getString(cursor.getColumnIndex("thread_count")) + ")");
+            long date = cursor.getLong(cursor.getColumnIndex("create_date"));
+            if (DateUtils.isToday(date)) {
+                viewHolder.tv_date.setText(DateFormat.getTimeFormat(getActivity()).format(date));
+            } else {
+                viewHolder.tv_date.setText(DateFormat.getDateFormat(getActivity()).format(date));
+            }
         }
     }
 
     private class ViewHolder {
 
         public TextView tv_group_name;
+        public TextView tv_date;
 
         public ViewHolder(View view) {
             tv_group_name = (TextView) view.findViewById(R.id.tv_group_name);
+            tv_date = (TextView) view.findViewById(R.id.tv_date);
         }
     }
 }
