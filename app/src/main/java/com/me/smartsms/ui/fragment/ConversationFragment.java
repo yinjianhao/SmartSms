@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -38,6 +39,7 @@ import com.me.smartsms.ui.activity.DetailActivity;
 import com.me.smartsms.ui.activity.NewSmsActivity;
 import com.me.smartsms.ui.dialog.ConfirmDialog;
 import com.me.smartsms.ui.dialog.DeleteDialog;
+import com.me.smartsms.ui.dialog.GroupDialog;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -113,8 +115,8 @@ public class ConversationFragment extends BaseFragment {
         view.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK){
-                    if(editState) {
+                if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
+                    if (editState) {
                         editState = false;
                         smsCursorAdapter.notifyDataSetChanged();
                         showEditMenu();
@@ -162,13 +164,96 @@ public class ConversationFragment extends BaseFragment {
             }
         });
 
+//        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//            @Override
+//            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+//                if(!editState) {
+//                    editState = true;
+//                    smsCursorAdapter.notifyDataSetChanged();
+//                    showSelectMenu();
+//                }
+//                return true;
+//            }
+//        });
+
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if(!editState) {
-                    editState = true;
-                    smsCursorAdapter.notifyDataSetChanged();
-                    showSelectMenu();
+                Cursor cursor = (Cursor) smsCursorAdapter.getItem(position);
+                final String thread_id = cursor.getString(cursor.getColumnIndex("_id"));
+
+                Cursor cursor1 = getActivity().getContentResolver().query(Uri.parse("content://com.me.smartsms/thread_group/query"), null, "thread_id = ?", new String[]{thread_id}, null);
+                if (cursor1 != null) {
+                    if (cursor1.getCount() > 0) {
+                        cursor1.moveToFirst();
+                        final String group_id = cursor1.getString(cursor1.getColumnIndex("group_id"));
+                        Cursor cursor2 = getActivity().getContentResolver().query(Uri.parse("content://com.me.smartsms/groups/query"), null, "_id = ?", new String[]{group_id}, null);
+                        String GroupName = null;
+                        if (cursor2 != null) {
+                            cursor2.moveToFirst();
+                            GroupName = cursor2.getString(cursor2.getColumnIndex("name"));
+                            cursor2.close();
+                        }
+                        ConfirmDialog confirmDialog = new ConfirmDialog(getActivity(), "确定", "你确定要退出[" + GroupName + "]群组吗?", new ConfirmDialog.OnConfirmListener() {
+                            @Override
+                            public void onCancel() {
+
+                            }
+
+                            @Override
+                            public void onConfirm() {
+                                getActivity().getContentResolver().delete(Uri.parse("content://com.me.smartsms/thread_group/delete"), "thread_id = ?", new String[]{thread_id});
+                                Cursor cursor5 = getActivity().getContentResolver().query(Uri.parse("content://com.me.smartsms/groups/query"), null, "_id = ?", new String[]{group_id}, null);
+                                if(cursor5 != null) {
+                                    cursor5.moveToFirst();
+                                    int count = cursor5.getInt(cursor5.getColumnIndex("thread_count"));
+                                    cursor5.close();
+                                    ContentValues values = new ContentValues();
+                                    values.put("thread_count", count - 1);
+                                    getActivity().getContentResolver().update(Uri.parse("content://com.me.smartsms/groups/update"), values, "_id = ?", new String[]{group_id});
+                                }
+                            }
+                        });
+                        confirmDialog.show();
+                    } else {
+                        final Cursor cursor3 = getActivity().getContentResolver().query(Uri.parse("content://com.me.smartsms/groups/query"), null, null, null, null);
+                        if (cursor3 != null) {
+                            if (cursor3.getCount() > 0) {
+                                String[] items = new String[cursor3.getCount()];
+                                for (int i = 0, l = cursor3.getCount(); i < l; i++) {
+                                    if (cursor3.moveToNext()) {
+                                        items[i] = cursor3.getString(cursor3.getColumnIndex("name"));
+                                    }
+                                }
+                                GroupDialog groupDialog = new GroupDialog(getActivity(), "群组列表", items, new GroupDialog.GroupDialogListener() {
+                                    @Override
+                                    public void onItemClickListener(AdapterView<?> parent, View view, int position, long id) {
+                                        cursor3.moveToPosition(position);
+                                        ContentValues contentValues = new ContentValues();
+                                        String group_id = cursor3.getString(cursor3.getColumnIndex("_id"));
+                                        contentValues.put("group_id", group_id);
+                                        contentValues.put("thread_id", thread_id);
+                                        getActivity().getContentResolver().insert(Uri.parse("content://com.me.smartsms/thread_group/insert"), contentValues);
+
+                                        Cursor cursor4 = getActivity().getContentResolver().query(Uri.parse("content://com.me.smartsms/groups/query"), null, "_id = ?", new String[]{group_id}, null);
+                                        if(cursor4 != null) {
+                                            cursor4.moveToFirst();
+                                            int count = cursor4.getInt(cursor4.getColumnIndex("thread_count"));
+                                            cursor4.close();
+                                            ContentValues values = new ContentValues();
+                                            values.put("thread_count", count + 1);
+                                            getActivity().getContentResolver().update(Uri.parse("content://com.me.smartsms/groups/update"), values, "_id = ?", new String[]{group_id});
+                                        }
+                                    }
+                                });
+                                groupDialog.show();
+                            } else {
+                                Toast.makeText(getActivity(), "当前没有群组", Toast.LENGTH_SHORT).show();
+                            }
+//                            cursor3.close();
+                        }
+                    }
+                    cursor1.close();
                 }
                 return true;
             }
@@ -354,17 +439,12 @@ public class ConversationFragment extends BaseFragment {
 
         @Override
         protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
-            super.onQueryComplete(token, cookie, cursor);
-
-            if (cookie != null && cookie instanceof SmsCursorAdapter && cursor != null && cursor.getCount() > 0) {
-                ((SmsCursorAdapter) cookie).changeCursor(cursor);
-                smsCursor = cursor;
+            if (token == 1) {
+                if (cookie != null && cookie instanceof SmsCursorAdapter && cursor != null && cursor.getCount() > 0) {
+                    ((SmsCursorAdapter) cookie).changeCursor(cursor);
+                    smsCursor = cursor;
+                }
             }
-        }
-
-        @Override
-        protected void onDeleteComplete(int token, Object cookie, int result) {
-
         }
     }
 

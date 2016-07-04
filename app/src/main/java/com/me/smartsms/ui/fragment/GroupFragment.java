@@ -8,9 +8,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.renderscript.Sampler;
 import android.support.v4.widget.CursorAdapter;
-import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -66,7 +64,7 @@ public class GroupFragment extends BaseFragment {
                     public void onItemClickListener(AdapterView<?> parent, View view, int position, long id) {
                         switch (position) {
                             case 0:
-                                helper.startDelete(1, null, Uri.parse("content://com.me.smartsms"), "_id = ?", new String[]{_id});
+                                helper.startDelete(1, null, Uri.parse("content://com.me.smartsms/groups/delete"), "_id = ?", new String[]{_id});
                                 break;
                             case 1:
                                 InputDialog inputDialog = new InputDialog(getActivity(), "修改组名", new InputDialog.OnInputDialogListener() {
@@ -80,7 +78,7 @@ public class GroupFragment extends BaseFragment {
                                     public void onConfirm(String groupName) {
                                         ContentValues values = new ContentValues();
                                         values.put("name", groupName);
-                                        helper.startUpdate(1, null, Uri.parse("content://com.me.smartsms"), values, "_id = ?", new String[]{_id});
+                                        helper.startUpdate(1, null, Uri.parse("content://com.me.smartsms/groups/update"), values, "_id = ?", new String[]{_id});
                                     }
                                 });
                                 inputDialog.show();
