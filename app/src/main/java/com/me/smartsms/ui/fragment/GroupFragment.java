@@ -5,6 +5,7 @@ import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import android.widget.Toast;
 
 import com.me.smartsms.R;
 import com.me.smartsms.base.BaseFragment;
+import com.me.smartsms.ui.activity.GroupsDetailActivity;
 import com.me.smartsms.ui.dialog.GroupDialog;
 import com.me.smartsms.ui.dialog.InputDialog;
 
@@ -49,7 +51,13 @@ public class GroupFragment extends BaseFragment {
         lv_groups.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(getActivity(), "单击", Toast.LENGTH_SHORT).show();
+                Cursor cursor = (Cursor) adapter.getItem(position);
+                String group_id = cursor.getString(cursor.getColumnIndex("_id"));
+                String group_name = cursor.getString(cursor.getColumnIndex("name"));
+                Intent intent = new Intent(getActivity(), GroupsDetailActivity.class);
+                intent.putExtra("group_id", group_id);
+                intent.putExtra("group_name", group_name);
+                startActivity(intent);
             }
         });
 

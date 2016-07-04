@@ -41,9 +41,13 @@
                 <action android:name="com.me.smartsms.sendsms" />
             </intent-filter>
         </receiver>
+
         <provider
             android:name=".provider.GroupProvider"
             android:authorities="com.me.smartsms"
             android:exported="true" />
+
+        <activity android:name=".ui.activity.GroupsDetailActivity"></activity>
     </application>
+
 </manifest>
